@@ -4,12 +4,12 @@ import { User } from '@/lib/models/User';
 import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
 
-// Temporary in-memory store (Use Redis for production)
+
 let otpStore: Record<string, string> = {}; 
 
-// Configure Nodemailer Transporter
+
 const transporter = nodemailer.createTransport({
-  service: 'gmail', // Or use 'smtp.mailtrap.io' for testing
+  service: 'gmail', 
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
@@ -22,22 +22,19 @@ export async function POST(req: Request) {
     const { action, email, otp, newPassword } = body;
     await connectDB();
 
-    // ===========================
-    // ACTION 1: SEND REAL OTP
-    // ===========================
     if (action === 'SEND_OTP') {
-      // 1. DATABASE CHECK (Critical)
+      
       const user = await User.findOne({ email });
       if (!user) {
-        // Security Best Practice: Don't reveal if user exists, but for this prototype:
+        
         return NextResponse.json({ error: 'No account found with this email ID.' }, { status: 404 });
       }
 
-      // 2. Generate OTP
+      
       const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
       otpStore[email] = generatedOtp;
 
-      // 3. SEND REAL EMAIL
+      
       try {
         await transporter.sendMail({
           from: '"e-Malkhana Security" <no-reply@emalkhana.gov.in>',
@@ -60,9 +57,7 @@ export async function POST(req: Request) {
       }
     }
 
-    // ===========================
-    // ACTION 2: RESET PASSWORD
-    // ===========================
+    
     if (action === 'RESET_PASSWORD') {
       if (!otpStore[email] || otpStore[email] !== otp) {
         return NextResponse.json({ error: 'Invalid or expired OTP' }, { status: 400 });
@@ -71,7 +66,7 @@ export async function POST(req: Request) {
       const hashedPassword = await bcrypt.hash(newPassword, 10);
       await User.findOneAndUpdate({ email }, { password: hashedPassword });
       
-      delete otpStore[email]; // Clear OTP after use
+      delete otpStore[email]; 
 
       return NextResponse.json({ message: 'Password updated successfully' });
     }

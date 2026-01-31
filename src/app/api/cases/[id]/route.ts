@@ -1,68 +1,5 @@
-// import { NextResponse } from 'next/server';
-// import { connectDB } from '@/lib/db';
-// import { Case } from '@/lib/models/Case';
 
-// type Props = {
-//   params: Promise<{ id: string }>;
-// };
 
-// // GET Single Case
-// export async function GET(req: Request, { params }: Props) {
-//   await connectDB();
-//   const { id } = await params;
-
-//   try {
-//     const singleCase = await Case.findById(id);
-//     if (!singleCase) return NextResponse.json({ error: 'Case not found' }, { status: 404 });
-//     return NextResponse.json(singleCase);
-//   } catch (error) {
-//     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-//   }
-// }
-
-// // PATCH (Update Move or Dispose)
-// export async function PATCH(req: Request, { params }: Props) {
-//   await connectDB();
-//   const { id } = await params;
-//   const body = await req.json();
-//   const { action, ...data } = body; 
-
-//   try {
-//     const caseItem = await Case.findById(id);
-//     if (!caseItem) return NextResponse.json({ error: 'Case not found' }, { status: 404 });
-
-//     if (action === 'ADD_LOG') {
-//       caseItem.chainOfCustody.push({
-//         from: data.from,
-//         to: data.to,
-//         purpose: data.purpose,
-//         remarks: data.remarks,
-//         propertyName: data.propertyName, // <--- SAVING THE SPECIFIC ITEM NAME
-//         date: new Date()
-//       });
-//     } else if (action === 'DISPOSE_PROPERTY') {
-//       const propIndex = caseItem.properties.findIndex((p: any) => p._id.toString() === data.propertyId);
-//       if (propIndex > -1) {
-//         caseItem.properties[propIndex].status = 'Disposed';
-//         caseItem.properties[propIndex].disposalDetails = {
-//           type: data.disposalType,
-//           orderReference: data.orderRef,
-//           remarks: data.remarks,
-//           date: new Date()
-//         };
-//       }
-      
-//       // Auto-close case if all items are disposed
-//       const allDisposed = caseItem.properties.every((p: any) => p.status === 'Disposed');
-//       if (allDisposed) caseItem.status = 'Disposed';
-//     }
-
-//     await caseItem.save();
-//     return NextResponse.json(caseItem);
-//   } catch (error) {
-//     return NextResponse.json({ error: 'Update failed' }, { status: 500 });
-//   }
-// }
 
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
@@ -88,11 +25,13 @@ export async function PATCH(req: Request, { params }: Props) {
   const body = await req.json();
   const { action, ...data } = body; 
 
+  console.log(`[API] Processing Action: ${action} for Case ${id}`); 
+
   try {
     const caseItem = await Case.findById(id);
     if (!caseItem) return NextResponse.json({ error: 'Case not found' }, { status: 404 });
 
-    // 1. ADD NEW PROPERTY
+    //  ADD NEW PROPERTY
     if (action === 'ADD_PROPERTY') {
        caseItem.properties.push({
          category: data.category,
@@ -104,29 +43,27 @@ export async function PATCH(req: Request, { params }: Props) {
          imageUrl: data.imageUrl,
          status: 'In Custody'
        });
-       caseItem.status = 'Active'; // Re-open case if it was closed
+       caseItem.status = 'Active';
     }
 
-    // 2. LOG MOVEMENT
+    //  LOG MOVEMENT (Fixed)
     else if (action === 'ADD_LOG') {
+      console.log("[API] Adding Log Data:", data); 
+      
       caseItem.chainOfCustody.push({
-        from: data.from,
+        from: data.from || 'Malkhana', 
         to: data.to,
         purpose: data.purpose,
         remarks: data.remarks,
-        propertyName: data.propertyName,
+        propertyName: data.propertyName, 
         date: new Date()
       });
     } 
 
-    // 3. DISPOSE PROPERTY (FIXED LOGIC)
+    //  DISPOSE PROPERTY
     else if (action === 'DISPOSE_PROPERTY') {
-      // Use Mongoose subdocument ID method for accuracy
       const property = caseItem.properties.id(data.propertyId);
-      
-      if (!property) {
-         return NextResponse.json({ error: 'Property not found' }, { status: 404 });
-      }
+      if (!property) return NextResponse.json({ error: 'Property not found' }, { status: 404 });
 
       property.status = 'Disposed';
       property.disposalDetails = {
@@ -137,19 +74,19 @@ export async function PATCH(req: Request, { params }: Props) {
       };
     }
 
-    // 4. CLOSE CASE
+    //  CLOSE CASE
     else if (action === 'CLOSE_CASE') {
        const hasActiveItems = caseItem.properties.some((p: any) => p.status !== 'Disposed');
-       if (hasActiveItems) {
-          return NextResponse.json({ error: 'Cannot close: Active items remain.' }, { status: 400 });
-       }
+       if (hasActiveItems) return NextResponse.json({ error: 'Cannot close: Active items remain.' }, { status: 400 });
        caseItem.status = 'Disposed'; 
     }
 
     await caseItem.save();
+    console.log("[API] Save Successful");
     return NextResponse.json(caseItem);
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: 'Update failed' }, { status: 500 });
+    
+  } catch (error: any) {
+    console.error("[API ERROR]", error); 
+    return NextResponse.json({ error: error.message || 'Update failed' }, { status: 500 });
   }
 }

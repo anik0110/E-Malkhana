@@ -32,7 +32,7 @@ export default function CaseForm() {
       
       if (res.ok) {
         router.push('/cases');
-        router.refresh(); // Refresh server components to show new data
+        router.refresh(); 
       } else {
         alert('Failed to register case');
       }

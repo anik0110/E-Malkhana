@@ -1,71 +1,100 @@
+
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, FilePlus, Search, UserCircle, LogOut, ShieldAlert } from 'lucide-react';
 import { signOut } from 'next-auth/react';
+import { 
+  LayoutDashboard, FolderOpen, PlusSquare, 
+  User, LogOut, X, Shield 
+} from 'lucide-react';
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
+
+  const links = [
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Manage Entries', href: '/cases', icon: FolderOpen },
+    { name: 'New Entry', href: '/cases/create', icon: PlusSquare },
+    { name: 'My Profile', href: '/profile', icon: User },
+  ];
 
   const isActive = (path: string) => pathname === path;
 
-  const NavItem = ({ href, icon: Icon, label }: any) => (
-    <Link 
-      href={href} 
-      className={`relative flex items-center px-4 py-3 mb-2 rounded-xl transition-all duration-200 group overflow-hidden ${
-        isActive(href) 
-          ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' 
-          : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
-      }`}
-    >
-      <Icon className={`h-5 w-5 mr-3 transition-transform group-hover:scale-110 ${isActive(href) ? 'text-white' : 'text-slate-400 group-hover:text-blue-400'}`} />
-      <span className="font-medium">{label}</span>
+  
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full bg-slate-900 text-white">
       
-      {/* Active Indicator Glow */}
-      {isActive(href) && (
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white/20 rounded-l-full blur-sm"></div>
-      )}
-    </Link>
+      <div className="h-20 flex items-center gap-3 px-6 border-b border-slate-800">
+        <div className="bg-indigo-600 p-1.5 rounded-lg">
+          <Shield className="h-6 w-6 text-white" />
+        </div>
+        <div>
+          <h1 className="font-bold text-lg tracking-wide">e-Malkhana</h1>
+          <p className="text-[10px] text-slate-400 uppercase tracking-wider">Official Portal</p>
+        </div>
+        
+        <button onClick={onClose} className="md:hidden ml-auto text-slate-400 hover:text-white">
+          <X className="h-6 w-6" />
+        </button>
+      </div>
+
+      
+      <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+        {links.map((link) => (
+          <Link 
+            key={link.href} 
+            href={link.href}
+            onClick={onClose} 
+            className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200 group ${
+              isActive(link.href) 
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50' 
+                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+            }`}
+          >
+            <link.icon className={`h-5 w-5 ${isActive(link.href) ? 'text-white' : 'text-slate-500 group-hover:text-white'}`} />
+            <span className="font-medium text-sm">{link.name}</span>
+          </Link>
+        ))}
+      </nav>
+
+      
+      <div className="p-4 border-t border-slate-800">
+        <button 
+          onClick={() => signOut({ callbackUrl: '/' })}
+          className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-500 transition-colors"
+        >
+          <LogOut className="h-5 w-5" />
+          <span className="font-medium text-sm">Sign Out</span>
+        </button>
+      </div>
+    </div>
   );
 
   return (
-    <aside className="w-72 bg-slate-950 border-r border-slate-800/50 min-h-screen p-6 flex flex-col relative overflow-hidden">
-      {/* Background Decor */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-        <div className="absolute -top-[10%] -left-[20%] w-64 h-64 bg-blue-900/20 rounded-full blur-3xl"></div>
-        <div className="absolute top-[40%] -right-[20%] w-40 h-40 bg-indigo-900/10 rounded-full blur-3xl"></div>
-      </div>
+    <>
+      
+      <aside className="hidden md:flex w-64 flex-col fixed inset-y-0 z-50">
+        <SidebarContent />
+      </aside>
 
-      {/* Logo */}
-      <div className="relative z-10 flex items-center gap-3 mb-10 px-2">
-        <div className="p-2 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-lg shadow-lg shadow-blue-500/20">
-          <ShieldAlert className="h-6 w-6 text-white" />
+      
+      {isOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          
+          <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={onClose}></div>
+          
+          
+          <div className="fixed inset-y-0 left-0 w-64 bg-slate-900 shadow-2xl animate-in slide-in-from-left duration-200">
+            <SidebarContent />
+          </div>
         </div>
-        <div>
-           <h1 className="text-xl font-bold text-white tracking-tight">e-Malkhana</h1>
-           <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Official Portal</p>
-        </div>
-      </div>
-
-      {/* Nav Items */}
-      <nav className="relative z-10 flex-1 space-y-1">
-        <NavItem href="/dashboard" icon={LayoutDashboard} label="Dashboard" />
-        <NavItem href="/cases/create" icon={FilePlus} label="New Entry" />
-        <NavItem href="/cases" icon={Search} label="Search & Manage" />
-        <NavItem href="/profile" icon={UserCircle} label="My Profile" />
-      </nav>
-
-      {/* Logout */}
-      <div className="relative z-10 mt-auto pt-6 border-t border-slate-800/50">
-        <button 
-          onClick={() => signOut({ callbackUrl: '/' })}
-          className="flex items-center w-full px-4 py-3 text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-xl transition-all"
-        >
-          <LogOut className="mr-3 h-5 w-5" /> 
-          <span className="font-medium">Sign Out</span>
-        </button>
-      </div>
-    </aside>
+      )}
+    </>
   );
 }

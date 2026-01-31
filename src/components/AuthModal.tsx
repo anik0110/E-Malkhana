@@ -15,15 +15,15 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Form States
+  
   const [formData, setFormData] = useState({ name: '', email: '', password: '', otp: '' });
-  const [otpSent, setOtpSent] = useState(false); // For Forgot Password flow
+  const [otpSent, setOtpSent] = useState(false); 
 
   if (!isOpen) return null;
 
   const resetState = () => { setError(''); setSuccess(''); setLoading(false); };
 
-  // --- HANDLERS ---
+  
   
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +50,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     e.preventDefault();
     resetState(); setLoading(true);
     
-    // Step 1: Send OTP
+    
     if (!otpSent) {
       const res = await fetch('/api/auth/forgot-password', {
         method: 'POST', body: JSON.stringify({ action: 'SEND_OTP', email: formData.email })
@@ -58,7 +58,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       if (res.ok) { setOtpSent(true); setSuccess('OTP Sent! Check console/email.'); }
       else setError('Email not found.');
     } 
-    // Step 2: Verify & Reset
+    
     else {
       const res = await fetch('/api/auth/forgot-password', {
         method: 'POST', body: JSON.stringify({ 
@@ -90,7 +90,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         {success && <div className="mx-8 mt-6 p-3 bg-green-50 text-green-600 text-sm rounded-lg text-center">{success}</div>}
 
         <div className="p-8">
-          {/* LOGIN FORM */}
+          
           {view === 'login' && (
             <form onSubmit={handleLogin} className="space-y-4">
               <Input icon={Mail} type="email" placeholder="Official Email" value={formData.email} onChange={(e: any) => setFormData({...formData, email: e.target.value})} />
@@ -101,7 +101,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             </form>
           )}
 
-          {/* SIGNUP FORM */}
+          
           {view === 'signup' && (
             <form onSubmit={handleSignup} className="space-y-4">
               <Input icon={User} placeholder="Full Name" value={formData.name} onChange={(e: any) => setFormData({...formData, name: e.target.value})} />
@@ -112,7 +112,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             </form>
           )}
 
-          {/* FORGOT PASSWORD FORM */}
+          
           {view === 'forgot' && (
             <form onSubmit={handleForgotPass} className="space-y-4">
               <Input icon={Mail} type="email" placeholder="Enter Registered Email" disabled={otpSent} value={formData.email} onChange={(e: any) => setFormData({...formData, email: e.target.value})} />

@@ -14,12 +14,12 @@ export default function QRCodeGenerator({ data, label, subLabel }: QRProps) {
   const qrRef = useRef<HTMLDivElement>(null);
 
   const handlePrint = () => {
-    // Basic print logic: open a new window with just this QR code
+    
     const printContent = qrRef.current?.innerHTML;
     const originalContent = document.body.innerHTML;
 
     if (printContent) {
-      // Create a temporary print styling
+      
       const printWindow = window.open('', '', 'height=500, width=500');
       if (printWindow) {
         printWindow.document.write('<html><head><title>Print QR</title>');

@@ -7,7 +7,7 @@ export async function POST(req: Request) {
     await connectDB();
     const body = await req.json();
     
-    // Auto-generate QR data for properties
+    
     const propertiesWithQR = body.properties.map((p: any) => ({
       ...p,
       qrCodeData: JSON.stringify({ 

@@ -17,7 +17,7 @@ export const authOptions: NextAuthOptions = {
         const match = await bcrypt.compare(credentials!.password, user.password);
         if (!match) throw new Error("Incorrect password.");
 
-        // Return badgeId. If missing (old users), fallback to "LEGACY"
+        
         return { 
           id: user._id.toString(), 
           name: user.name, 
@@ -31,13 +31,13 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }: any) {
       if (session.user) {
         session.user.id = token.sub;
-        session.user.badgeId = token.badgeId; // <--- Pass to session
+        session.user.badgeId = token.badgeId; 
       }
       return session;
     },
     async jwt({ token, user }: any) {
       if (user) {
-        token.badgeId = user.badgeId; // <--- Store in token
+        token.badgeId = user.badgeId; 
       }
       return token;
     }
